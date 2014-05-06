@@ -11,7 +11,27 @@ This is attampt to write ErrorContext from `blog post`_ in Rust.
 Usage
 =====
 
-See example.rs.
+See example.rs ::
+
+    #![feature(phase)]
+
+    #[phase(syntax, link)]
+    extern crate error_context;
+
+    fn main() {
+        error_context::ErrorContext::init();
+        set_context!("loading level", "level1");
+        {
+            set_context!("loading model", "tank.model");
+            {
+                set_context!("loading texture", "tank.png");
+                {
+                    // ...
+                    context_fail!("Can`t parse integer: {}", 1);
+                }
+            }
+        }
+    }
 
 
 Contribute
