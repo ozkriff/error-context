@@ -21,15 +21,14 @@ See example.rs ::
     extern crate error_context;
 
     fn main() {
-        error_context::ErrorContext::init();
-        set_context!("loading level", "level1");
+        set_error_context!("loading level", "level1");
         {
-            set_context!("loading model", "tank.model");
+            set_error_context!("loading model", "tank.model");
             {
-                set_context!("loading texture", "tank.png");
+                set_error_context!("loading texture", "tank.png");
                 {
                     // ...
-                    context_fail!("Can`t parse integer: {}", 1);
+                    fail!("Can`t parse integer: {}", 1);
                 }
             }
         }
@@ -37,10 +36,10 @@ See example.rs ::
 
 Output ::
 
+    task '<main>' failed at 'Can`t parse integer: 1', example.rs:17
     When loading level: level1
     When loading model: tank.model
     When loading texture: tank.png
-    task '<main>' failed at 'Can`t parse integer: 1', example.rs:17
 
 
 Contribute
