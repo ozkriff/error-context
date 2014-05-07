@@ -8,82 +8,90 @@ use std::cast::transmute;
 use std::local_data;
 
 #[macro_export]
-macro_rules! context_fail (
-    ($($e: expr),+) => ({
-        error_context::ErrorContext::print_contexts();
-        fail!($($e),+);
-    })
-)
-
-#[macro_export]
-macro_rules! set_context (
+macro_rules! set_error_context (
     ($name: expr, $data: expr) => (
         let _ec = error_context::ErrorContext::new($name, $data);
     )
 )
 
-fn store_str(s: &&str) -> uint {
-    unsafe {
-        transmute::<&&str, uint>(s)
-    }
+// ErrorContext version without destructor for storing in global array
+struct ErrorContextInternal {
+    description: &'static str,
+    data: &'static str,
 }
 
-fn get_str(n: uint) -> &str {
-    unsafe {
-        *transmute::<uint, &&str>(n)
-    }
+local_data_key!(CONTEXTS: Vec<ErrorContextInternal>)
+
+pub struct ErrorContext<'a> {
+    description: &'static str,
+    data: &'a str,
 }
 
-struct ContextInfo {
-    name: uint,
-    data: uint,
-}
-
-local_data_key!(CONTEXTS: Vec<ContextInfo>)
-
-pub struct ErrorContext;
-
-impl ErrorContext {
-    pub fn init() {
+impl<'a> ErrorContext<'a> {
+    #[inline]
+    pub fn new<'a>(description: &'static str, data: &'a str) -> ErrorContext<'a> {
+        if !is_initialized() {
+            init();
+        }
         local_data::get_mut(CONTEXTS, |contexts| {
-            assert!(contexts.is_none());
-        });
-        local_data::set(CONTEXTS, Vec::new());
-    }
-
-    pub fn new(name: &str, data: &str) -> ErrorContext {
-        local_data::get_mut(CONTEXTS, |contexts| {
-            if contexts.is_none() {
-                fail!("Contexts not initialized");
-            }
-            contexts.unwrap().push(ContextInfo {
-                name: store_str(&name),
-                data: store_str(&data),
+            contexts.unwrap().push(ErrorContextInternal {
+                description: description,
+                data: unsafe {
+                    transmute::<&'a str, &'static str>(data)
+                },
             });
         });
-        ErrorContext
-    }
-
-    pub fn print_contexts() {
-        local_data::get(CONTEXTS, |contexts| {
-            if contexts.is_none() {
-                fail!("Contexts not initialized");
-            }
-            for context in contexts.unwrap().iter() {
-                let name = get_str(context.name);
-                let data = get_str(context.data);
-                println!("When {}: {}", name, data);
-            }
-        });
+        ErrorContext {
+            description: description,
+            data: data,
+        }
     }
 }
 
-impl Drop for ErrorContext {
+#[unsafe_destructor]
+impl<'a> Drop for ErrorContext<'a> {
     fn drop(&mut self) {
-        local_data::get_mut(CONTEXTS, |contexts| {
-            contexts.unwrap().pop();
-        });
+        if std::task::failing() {
+            on_task_fail();
+        } else {
+            local_data::get_mut(CONTEXTS, |contexts| {
+                contexts.unwrap().pop();
+            });
+        }
     }
+}
+
+fn init() {
+    local_data::get_mut(CONTEXTS, |contexts| {
+        assert!(contexts.is_none());
+    });
+    local_data::set(CONTEXTS, Vec::new());
+}
+
+#[inline]
+fn is_initialized() -> bool {
+    local_data::get(CONTEXTS, |contexts| {
+        contexts.is_some()
+    })
+}
+
+fn print_contexts() {
+    local_data::get(CONTEXTS, |contexts| {
+        if contexts.is_some() {
+            for context in contexts.unwrap().iter() {
+                println!("When {}: {}", context.description, context.data);
+            }
+        }
+    });
+}
+
+fn on_task_fail() {
+    print_contexts();
+    local_data::get_mut(CONTEXTS, |contexts| {
+        if contexts.is_some() {
+            contexts.unwrap().clear();
+        }
+    });
 }
 
 // vim: set tabstop=4 shiftwidth=4 softtabstop=4 expandtab:
