@@ -5,7 +5,7 @@
 #![feature(macro_rules)]
 
 use std::cast::transmute;
-use std::local_data;
+use std::cell;
 
 #[macro_export]
 macro_rules! set_error_context (
@@ -20,7 +20,7 @@ struct ErrorContextInternal {
     data: &'static str,
 }
 
-local_data_key!(CONTEXTS: Vec<ErrorContextInternal>)
+local_data_key!(CONTEXTS: cell::RefCell<Vec<ErrorContextInternal>>)
 
 pub struct ErrorContext<'a> {
     description: &'static str,
@@ -33,14 +33,17 @@ impl<'a> ErrorContext<'a> {
         if !is_initialized() {
             init();
         }
-        local_data::get_mut(CONTEXTS, |contexts| {
-            contexts.unwrap().push(ErrorContextInternal {
-                description: description,
-                data: unsafe {
-                    transmute::<&'a str, &'static str>(data)
-                },
-            });
-        });
+        match CONTEXTS.get() {
+            Some(contexts) => {
+                contexts.borrow_mut().push(ErrorContextInternal {
+                    description: description,
+                    data: unsafe {
+                        transmute::<&'a str, &'static str>(data)
+                    },
+                });
+            }
+            None => fail!("Contexts can not be None"),
+        }
         ErrorContext {
             description: description,
             data: data,
@@ -54,44 +57,43 @@ impl<'a> Drop for ErrorContext<'a> {
         if std::task::failing() {
             on_task_fail();
         } else {
-            local_data::get_mut(CONTEXTS, |contexts| {
-                contexts.unwrap().pop();
-            });
+            match CONTEXTS.get() {
+                Some(contexts) => {
+                    contexts.borrow_mut().pop();
+                },
+                None => {},
+            }
         }
     }
 }
 
 fn init() {
-    local_data::get_mut(CONTEXTS, |contexts| {
-        assert!(contexts.is_none());
-    });
-    local_data::set(CONTEXTS, Vec::new());
+    assert!(!is_initialized());
+    CONTEXTS.replace(Some(cell::RefCell::new(Vec::new())));
 }
 
 #[inline]
 fn is_initialized() -> bool {
-    local_data::get(CONTEXTS, |contexts| {
-        contexts.is_some()
-    })
+    CONTEXTS.get().is_some()
 }
 
 fn print_contexts() {
-    local_data::get(CONTEXTS, |contexts| {
-        if contexts.is_some() {
-            for context in contexts.unwrap().iter() {
+    match CONTEXTS.get() {
+        Some(contexts) => {
+            for context in contexts.borrow().iter() {
                 println!("When {}: {}", context.description, context.data);
             }
-        }
-    });
+        },
+        None => fail!("Contexts can not be None"),
+    }
 }
 
 fn on_task_fail() {
     print_contexts();
-    local_data::get_mut(CONTEXTS, |contexts| {
-        if contexts.is_some() {
-            contexts.unwrap().clear();
-        }
-    });
+    match CONTEXTS.get() {
+        Some(contexts) => contexts.borrow_mut().clear(),
+        None => fail!("Contexts can not be None"),
+    }
 }
 
 // vim: set tabstop=4 shiftwidth=4 softtabstop=4 expandtab:
