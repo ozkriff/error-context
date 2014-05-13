@@ -4,7 +4,7 @@
 
 #![feature(macro_rules)]
 
-use std::cast::transmute;
+use std::mem::transmute;
 use std::cell;
 
 #[macro_export]
