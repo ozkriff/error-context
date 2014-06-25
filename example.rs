@@ -2,7 +2,7 @@
 
 #![feature(phase)]
 
-#[phase(syntax, link)]
+#[phase(plugin, link)]
 extern crate error_context;
 
 fn main() {

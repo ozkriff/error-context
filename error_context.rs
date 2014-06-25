@@ -3,6 +3,7 @@
 // http://bitsquid.blogspot.ru/2012/01/sensible-error-handling-part-1.html
 
 #![feature(macro_rules)]
+#![feature(unsafe_destructor)]
 
 use std::mem::transmute;
 use std::cell;
