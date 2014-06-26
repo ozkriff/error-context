@@ -13,7 +13,7 @@ fn main() {
             set_error_context!("loading texture", "tank.png");
             {
                 // ...
-                fail!("Can`t parse integer: {}", 1);
+                fail!("Can`t parse integer: {}", 1i);
             }
         }
     }
