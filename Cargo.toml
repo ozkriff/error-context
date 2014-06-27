@@ -1,0 +1,11 @@
+[package]
+
+name = "error_context"
+version = "0.0.1"
+authors = [ "ozkriff@gmail.com" ]
+
+[[lib]]
+name = "error_context"
+
+[[bin]]
+name = "example"
