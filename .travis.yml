@@ -1,19 +1,19 @@
 # See LICENSE file for copyright and license details.
 
-before_install:
-    # - sudo add-apt-repository -y ppa:hansjorg/rust # TODO
-    - sudo apt-get update
-
 install:
-    # - sudo apt-get install rust-nightly # TODO
+    # cargo
+    - curl -O http://static.rust-lang.org/cargo-dist/cargo-nightly-linux.tar.gz
+    - tar xf cargo-nightly-linux.tar.gz
+    - export PATH=$PATH:$(pwd)/cargo-nightly/bin
 
-    # Download rust-nightly from rust-lang.org
+    # rustc
     - wget http://static.rust-lang.org/dist/rust-nightly-x86_64-unknown-linux-gnu.tar.gz
     - tar xzf rust-nightly-x86_64-unknown-linux-gnu.tar.gz
     - export PATH=$PATH:$(pwd)/rust-nightly-x86_64-unknown-linux-gnu/bin
+    - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(pwd)/rust-nightly-x86_64-unknown-linux-gnu/lib
     - rustc -v
 
 script:
-    - make
+    - cargo build
 
 # vim: set tabstop=4 shiftwidth=4 softtabstop=4 expandtab:

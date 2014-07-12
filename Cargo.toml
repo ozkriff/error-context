@@ -1,3 +1,5 @@
+# See LICENSE file for copyright and license details.
+
 [package]
 
 name = "error_context"
@@ -9,3 +11,5 @@ name = "error_context"
 
 [[bin]]
 name = "example"
+
+# vim: set tabstop=4 shiftwidth=4 softtabstop=4 expandtab:
