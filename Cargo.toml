@@ -10,6 +10,7 @@ authors = [ "ozkriff@gmail.com" ]
 name = "error_context"
 
 [[bin]]
+test = false
 name = "example"
 
 # vim: set tabstop=4 shiftwidth=4 softtabstop=4 expandtab:
