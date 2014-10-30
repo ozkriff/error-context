@@ -28,7 +28,7 @@ See example.rs ::
                 set_error_context!("loading texture", "tank.png");
                 {
                     // ...
-                    fail!("Can`t parse integer: {}", 1);
+                    panic!("Can`t parse integer: {}", 1);
                 }
             }
         }

@@ -43,7 +43,7 @@ impl<'a> ErrorContext<'a> {
                     },
                 });
             }
-            None => fail!("Contexts can not be None"),
+            None => panic!("Contexts can not be None"),
         }
         ErrorContext {
             description: description,
@@ -85,7 +85,7 @@ fn print_contexts() {
                 println!("When {}: {}", context.description, context.data);
             }
         },
-        None => fail!("Contexts can not be None"),
+        None => panic!("Contexts can not be None"),
     }
 }
 
@@ -93,7 +93,7 @@ fn on_task_fail() {
     print_contexts();
     match CONTEXTS.get() {
         Some(contexts) => contexts.borrow_mut().clear(),
-        None => fail!("Contexts can not be None"),
+        None => panic!("Contexts can not be None"),
     }
 }
 
